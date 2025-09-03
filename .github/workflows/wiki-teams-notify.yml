@@ -1,0 +1,35 @@
+name: Wiki Page Notifications
+
+on:
+  gollum
+
+jobs:
+  notify-teams:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Teams of Wiki Page Creation
+        if: ${{ github.event.pages[0].action == 'created' }}
+        run: |
+          payload=$(cat <<EOF
+          {
+            "@type": "MessageCard",
+            "@context": "http://schema.org/extensions",
+            "summary": "New Wiki Page Created",
+            "themeColor": "0076D7",
+            "title": "📝 New Wiki Page Created",
+            "sections": [
+              {
+                "facts": [
+                  { "name": "Page:", "value": "[${{ github.event.pages[0].page_name }}](${{ github.event.pages[0].html_url }})" },
+                  { "name": "Author:", "value": "${{ github.actor }}" },
+                  { "name": "Repository:", "value": "${{ github.repository }}" }
+                ],
+                "markdown": true
+              }
+            ]
+          }
+          EOF
+          )
+          curl -H 'Content-Type: application/json' \
+               -d "$payload" \
+               ${{ secrets.TEAMS_WIKI_WEBHOOK_URL  }}
