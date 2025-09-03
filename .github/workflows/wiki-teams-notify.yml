@@ -12,19 +12,44 @@ jobs:
         run: |
           payload=$(cat <<EOF
           {
-            "@type": "MessageCard",
-            "@context": "http://schema.org/extensions",
-            "summary": "New Wiki Page Created",
-            "themeColor": "0076D7",
-            "title": "📝 New Wiki Page Created",
-            "sections": [
+            "type": "message",
+            "attachments": [
               {
-                "facts": [
-                  { "name": "Page:", "value": "[${{ github.event.pages[0].page_name }}](${{ github.event.pages[0].html_url }})" },
-                  { "name": "Author:", "value": "${{ github.actor }}" },
-                  { "name": "Repository:", "value": "${{ github.repository }}" }
-                ],
-                "markdown": true
+                "contentType": "application/vnd.microsoft.card.adaptive",
+                "contentUrl": null,
+                "content": {
+                  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                  "type": "AdaptiveCard",
+                  "version": "1.4",
+                  "body": [
+                    {
+                      "type": "TextBlock",
+                      "text": "📝 New Wiki Page Created",
+                      "weight": "Bolder",
+                      "size": "Medium"
+                    },
+                    {
+                      "type": "FactSet",
+                      "facts": [
+                        { "title": "Page:", "value": "[${{ github.event.pages[0].page_name }}](${{ github.event.pages[0].html_url }})" },
+                        { "title": "Author:", "value": "${{ github.actor }}" },
+                        { "title": "Repository:", "value": "${{ github.repository }}" }
+                      ]
+                    }
+                  ],
+                  "actions": [
+                    {
+                      "type": "Action.OpenUrl",
+                      "title": "View Page",
+                      "url": "${{ github.event.pages[0].html_url }}"
+                    },
+                    {
+                      "type": "Action.OpenUrl",
+                      "title": "View Repository",
+                      "url": "https://github.com/${{ github.repository }}"
+                    }
+                  ]
+                }
               }
             ]
           }
@@ -32,4 +57,4 @@ jobs:
           )
           curl -H 'Content-Type: application/json' \
                -d "$payload" \
-               ${{ secrets.TEAMS_WIKI_WEBHOOK_URL  }}
+               ${{ secrets.TEAMS_WIKI_WEBHOOK_URL }}
