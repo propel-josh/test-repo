@@ -21,6 +21,10 @@ jobs:
             -d "scope=https://service.flow.microsoft.com/.default" \
             "https://login.microsoftonline.com/${{ secrets.AZURE_TENANT_ID }}/oauth2/v2.0/token" | jq -r '.access_token')
           echo "token=$TOKEN" >> $GITHUB_OUTPUT
+                
+      - name: Print token claims
+        run: |
+          echo "${{ steps.token.outputs.token }}" | jq -R 'split(".") | .[1] | @base64d | fromjson'
 
       - name: Call Power Automate Flow
         run: |
