@@ -1,34 +1,30 @@
-name: Notify Teams on Wiki Page Creation
+name: Notify Teams Workflow on Wiki Page Creation
 
 on:
   gollum:
 
 jobs:
   notify:
-    if: ${{ github.event.pages[0].action == 'created' }} 
     runs-on: ubuntu-latest
+    if: ${{ github.event.pages[0].action == 'created' }}
     steps:
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
 
-      - name: Get OAuth token for Power Automate
+      - name: Get OAuth token for Teams Workflow
         id: token
         run: |
           TOKEN=$(curl -s -X POST -H "Content-Type: application/x-www-form-urlencoded" \
             -d "client_id=${{ secrets.AZURE_CLIENT_ID }}" \
             -d "client_secret=${{ secrets.AZURE_CLIENT_SECRET }}" \
             -d "grant_type=client_credentials" \
-            -d "scope=https://service.flow.microsoft.com/.default" \
+            -d "scope=https://api.teams.microsoft.com/.default" \
             "https://login.microsoftonline.com/${{ secrets.AZURE_TENANT_ID }}/oauth2/v2.0/token" | jq -r '.access_token')
           echo "token=$TOKEN" >> $GITHUB_OUTPUT
-                
-      - name: Print token claims
-        run: |
-          echo "${{ steps.token.outputs.token }}" | jq -R 'split(".") | .[1] | @base64d | fromjson'
 
-      - name: Call Power Automate Flow
+      - name: Call Teams Workflow
         run: |
-          curl -s -X POST \
+          curl -X POST \
             -H "Authorization: Bearer ${{ steps.token.outputs.token }}" \
             -H "Content-Type: application/json" \
             -d '{
@@ -37,4 +33,4 @@ jobs:
                   "url": "${{ github.event.pages[0].html_url }}",
                   "repository": "${{ github.repository }}"
                 }' \
-            "${{ secrets.TEAMS_WEBHOOK_URL }}"
+            "${{ secrets.TEAMS_WORKFLOW_URL }}"
