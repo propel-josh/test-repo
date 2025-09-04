@@ -1,4 +1,4 @@
-name: Wiki Page Notifications
+name: Wiki Page Notification
 
 on:
   gollum
@@ -7,54 +7,14 @@ jobs:
   notify-teams:
     runs-on: ubuntu-latest
     steps:
-      - name: Notify Teams of Wiki Page Creation
+      - name: Notify Teams on Wiki Page Creation
         if: ${{ github.event.pages[0].action == 'created' }}
         run: |
-          payload=$(cat <<EOF
-          {
-            "type": "message",
-            "attachments": [
-              {
-                "contentType": "application/vnd.microsoft.card.adaptive",
-                "contentUrl": null,
-                "content": {
-                  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-                  "type": "AdaptiveCard",
-                  "version": "1.4",
-                  "body": [
-                    {
-                      "type": "TextBlock",
-                      "text": "📝 New Wiki Page Created",
-                      "weight": "Bolder",
-                      "size": "Medium"
-                    },
-                    {
-                      "type": "FactSet",
-                      "facts": [
-                        { "title": "Page:", "value": "[${{ github.event.pages[0].page_name }}](${{ github.event.pages[0].html_url }})" },
-                        { "title": "Author:", "value": "${{ github.actor }}" },
-                        { "title": "Repository:", "value": "${{ github.repository }}" }
-                      ]
-                    }
-                  ],
-                  "actions": [
-                    {
-                      "type": "Action.OpenUrl",
-                      "title": "View Page",
-                      "url": "${{ github.event.pages[0].html_url }}"
-                    },
-                    {
-                      "type": "Action.OpenUrl",
-                      "title": "View Repository",
-                      "url": "https://github.com/${{ github.repository }}"
-                    }
-                  ]
-                }
-              }
-            ]
-          }
-          EOF
-          )
-          curl -H 'Content-Type: application/json' \
-               -d "$payload" \
-               ${{ secrets.TEAMS_WIKI_WEBHOOK_URL }}
+          curl -X POST -H "Content-Type: application/json" \
+            -d '{
+                  "page": "${{ github.event.pages[0].page_name }}",
+                  "author": "${{ github.actor }}",
+                  "url": "${{ github.event.pages[0].html_url }}",
+                  "repository": "${{ github.repository }}"
+                }' \
+            ${{ secrets.TEAMS_WIKI_WEBHOOK_URL }}
